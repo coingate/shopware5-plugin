@@ -33,7 +33,7 @@ class CoingatePaymentService
         return md5(implode('|', [$amount, $customerId]));
     }
 
-    private function coingateCallback($order_id, $coingate_environment, $auth_token, $agent)
+    public function coingateCallback($order_id, $coingate_environment, $auth_token, $agent)
     {
         try {
             $order = \CoinGate\Merchant\Order::find($order_id, array(), array(

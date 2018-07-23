@@ -55,7 +55,7 @@ class Shopware_Controllers_Frontend_CoingatePayment extends Shopware_Controllers
             'price_currency'    => $this->getCurrencyShortName(),
             'receive_currency'  => $config['CoinGatePayout'],
             'title'             => $shop[0]["name"],
-            'description'       => "Order ID: " . $order_id,
+            'description'       => "Order #: " . $order_id,
             'success_url'       => $router->assemble(['action' => 'return']),
             'cancel_url'        => $router->assemble(['action' => 'cancel']),
             'callback_url'      => $router->assemble(['action' => 'callback']),
@@ -97,14 +97,16 @@ class Shopware_Controllers_Frontend_CoingatePayment extends Shopware_Controllers
 
         $response = $service->createPaymentResponse($order_id, $coingate_environment, $config['CoinGateCredentials'], $billing, $agent);
 
-        if (empty($response->token) && $token != $response->token) {
+        if (empty($response->token) || strcmp($response->token, $token) !== 0) {
             $this->forward('cancel');
         }
 
-        switch ($response->status) {
+        $cgOrder = $service->coingateCallback($response->id, $coingate_environment, $config['CoinGateCredentials'], $agent);
+
+        switch ($cgOrder->status) {
             case 'paid':
                 $this->saveOrder(
-                    $response->transactionId,
+                    $cgOrder->payment_url,
                     $response->token,
                     self::PAYMENTSTATUSPAID
                 );

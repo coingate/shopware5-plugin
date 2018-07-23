@@ -26,7 +26,7 @@ class CoingatePayment extends Plugin
             'active' => 1,
             'position' => 0,
             'additionalDescription' =>
-                '<img src="custom/plugins/CoingatePayment/plugin.png" alt="Cryptocurrency Payments via CoinGate"/>'
+                '<img src="custom/plugins/CoingatePayment/plugin.png" alt="Cryptocurrency Payments via CoinGate" style="max-width:25%;"/>'
                 . '<div id="payment_desc">'
                 . '  Cryptocurrency payments are processed by CoinGate.com - over 50 tokens supported. '
                 . '</div>'
