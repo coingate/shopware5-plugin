@@ -55,7 +55,7 @@ class Shopware_Controllers_Frontend_CoingatePayment extends Shopware_Controllers
             'price_currency'    => $this->getCurrencyShortName(),
             'receive_currency'  => $config['CoinGatePayout'],
             'title'             => $shop[0]["name"],
-            'description'       => "Order number:" .  $data[0]['orderNumber'],
+            'description'       => "Order number:" .  $order_id,
             'success_url'       => $router->assemble(['action' => 'return']),
             'cancel_url'        => $router->assemble(['action' => 'cancel']),
             'callback_url'      => $router->assemble(['action' => 'callback']),
