@@ -26,7 +26,7 @@
             <name>CoinGatePayout</name>
             <label lang="en">Payout Currency</label>
             <value>btc</value>
-            <description>Choose the currency in which your payouts will be made (BTC, EUR or USD). For real-time EUR or USD settlements, you must verify as a merchant on CoinGate. Do not forget to add your Bitcoin address or bank details for payouts on your CoinGate account.</description>
+            <description>Choose the currency in which your payouts will be made (BTC, EUR, USD, LTC, ETH or do not convert). For real-time EUR or USD settlements, you must verify as a merchant on CoinGate. Do not forget to add your Bitcoin address or bank details for payouts on your CoinGate account.</description>
             <store>
                 <option>
                     <value>btc</value>
@@ -40,6 +40,18 @@
                     <value>eur</value>
                     <label>Euro €</label>
                 </option>
+                <option>
+                  <value>ltc</value>
+                  <label>Litecoin</label>
+                </option>
+                <option>
+                  <value>eth</value>
+                  <label>Ethereum</label>
+                </option>
+                <option>
+                  <value>DO_NOT_CONVERT</value>
+                  <label>Do not convert</label>
+              </option>
             </store>
         </element>
     </elements>
