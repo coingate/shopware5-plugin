@@ -1,10 +1,10 @@
 <?php
 
-namespace CoingatePayment\Components\CoingatePayment;
+namespace CoinGatePayment\Components\CoinGatePayment;
 
 require_once __DIR__ . '/../coingate-php/init.php';
 
-class CoingatePaymentService
+class CoinGatePaymentService
 {
     /**
      * @param $request \Enlight_Controller_Request_Request

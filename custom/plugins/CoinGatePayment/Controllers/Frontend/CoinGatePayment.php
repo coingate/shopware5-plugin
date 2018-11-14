@@ -1,13 +1,13 @@
 <?php
 
-use CoingatePayment\Components\CoingatePayment\PaymentResponse;
-use CoingatePayment\Components\CoingatePayment\CoingatePaymentService;
+use CoinGatePayment\Components\CoinGatePayment\PaymentResponse;
+use CoinGatePayment\Components\CoinGatePayment\CoinGatePaymentService;
 use Shopware\Components\Plugin\ConfigReader;
 use Shopware\Components\CSRFWhitelistAware;
 
 require_once __DIR__ . '/../../Components/coingate-php/init.php';
 
-class Shopware_Controllers_Frontend_CoingatePayment extends Shopware_Controllers_Frontend_Payment implements CSRFWhitelistAware
+class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers_Frontend_Payment implements CSRFWhitelistAware
 {
     private $pluginDirectory;
     private $config;
@@ -20,7 +20,7 @@ class Shopware_Controllers_Frontend_CoingatePayment extends Shopware_Controllers
     public function preDispatch()
     {
         /** @var \Shopware\Components\Plugin $plugin */
-        $plugin = $this->get('kernel')->getPlugins()['CoingatePayment'];
+        $plugin = $this->get('kernel')->getPlugins()['CoinGatePayment'];
 
         $this->get('template')->addTemplateDir($plugin->getPath() . '/Resources/views/');
     }
@@ -42,7 +42,7 @@ class Shopware_Controllers_Frontend_CoingatePayment extends Shopware_Controllers
      */
     public function directAction()
     {
-        $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('CoingatePayment');
+        $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('CoinGatePayment');
         $router = $this->Front()->Router();
 
         $data = $this->getOrderData();
@@ -83,7 +83,7 @@ class Shopware_Controllers_Frontend_CoingatePayment extends Shopware_Controllers
     {
         $service = $this->container->get('cryptocurrency_payments_via_coingate.coingate_payment_service');
         $token = $this->createPaymentToken($this->getAmount(), $billing['customernumber']);
-        $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('CoingatePayment');
+        $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('CoinGatePayment');
         $coingate_environment = $this->coingateEnvironment();
         $agent = $this->userAgent();
         $id = $this->callbackAction();
@@ -169,7 +169,7 @@ class Shopware_Controllers_Frontend_CoingatePayment extends Shopware_Controllers
 
     private function coingateEnvironment()
     {
-        $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('CoingatePayment');
+        $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('CoinGatePayment');
         if ($config['CoinGateEnvironment'] == 'sandbox') {
             $environment = 'sandbox';
         } else {
