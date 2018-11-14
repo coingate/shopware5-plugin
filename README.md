@@ -14,7 +14,7 @@ Also note, that *Receive Currency* parameter in your module configuration window
 
 ### via FTP
 
-1. Download <https://github.com/coingate/shopware/releases/download/v1.0.0/coingate-shopware-1.0.0.zip>
+1. Download <https://github.com/coingate/shopware/releases/download/v1.0.1/coingate-shopware-1.0.1.zip>
 
 2. Upload **custom** folder to your website's root directory
 
