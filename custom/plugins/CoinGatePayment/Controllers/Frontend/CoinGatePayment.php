@@ -202,13 +202,9 @@ class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers
 
     private function getPluginVersion()
     {
-        $queryBuilder = $this->container->get('dbal_connection')->createQueryBuilder();
-        $queryBuilder->select('version')
-            ->from('s_core_plugins')
-            ->where('label = "Cryptocurrency Payments via CoinGate"');
-        $data = $queryBuilder->execute()->fetchAll();
-
-        return $data;
+        $plugin = $this->get('kernel')->getPlugins()['CoinGatePayment'];
+        $xml = simplexml_load_file( $plugin->getPath() ."/plugin.xml") or die("Error parsing plugin.xml");
+		return $xml->version;
     }
 
     private function insertOrderID($id)
