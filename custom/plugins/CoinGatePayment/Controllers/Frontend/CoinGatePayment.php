@@ -204,7 +204,8 @@ class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers
     {
         $plugin = $this->get('kernel')->getPlugins()['CoinGatePayment'];
         $xml = simplexml_load_file( $plugin->getPath() ."/plugin.xml") or die("Error parsing plugin.xml");
-		return $xml->version;
+		    
+        return $xml->version;
     }
 
     private function insertOrderID($id)
