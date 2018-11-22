@@ -202,8 +202,9 @@ class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers
 
     private function getPluginVersion()
     {
-        $xml = simplexml_load_file("../../plugin.xml") or die("Error parsing plugin.xml");
-
+        $plugin = $this->get('kernel')->getPlugins()['CoinGatePayment'];
+        $xml = simplexml_load_file( $plugin->getPath() ."/plugin.xml") or die("Error parsing plugin.xml");
+		    
         return $xml->version;
     }
 
