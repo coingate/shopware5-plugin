@@ -1,13 +1,13 @@
 <?php
 
-use CoinGatePayment\Components\CoinGatePayment\PaymentResponse;
-use CoinGatePayment\Components\CoinGatePayment\CoinGatePaymentService;
+use CoingatePayment\Components\CoingatePayment\PaymentResponse;
+use CoingatePayment\Components\CoingatePayment\CoingatePaymentService;
 use Shopware\Components\Plugin\ConfigReader;
 use Shopware\Components\CSRFWhitelistAware;
 
-require_once __DIR__ . '/../../Components/coingate-php/init.php';
+require_once __DIR__ . '/../../Components/coingate-php/vendor/autoload.php';
 
-class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers_Frontend_Payment implements CSRFWhitelistAware
+class Shopware_Controllers_Frontend_CoingatePayment extends Shopware_Controllers_Frontend_Payment implements CSRFWhitelistAware
 {
     private $pluginDirectory;
     private $config;
@@ -20,7 +20,7 @@ class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers
     public function preDispatch()
     {
         /** @var \Shopware\Components\Plugin $plugin */
-        $plugin = $this->get('kernel')->getPlugins()['CoinGatePayment'];
+        $plugin = $this->get('kernel')->getPlugins()['CoingatePayment'];
 
         $this->get('template')->addTemplateDir($plugin->getPath() . '/Resources/views/');
     }
@@ -42,7 +42,7 @@ class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers
      */
     public function directAction()
     {
-        $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('CoinGatePayment');
+        $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('CoingatePayment');
         $router = $this->Front()->Router();
 
         $data = $this->getOrderData();
@@ -68,8 +68,7 @@ class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers
             'environment' => $coingate_environment,
             'auth_token'  => $config['CoinGateCredentials'],
             'user_agent'  => $this->userAgent(),
-        ));
-
+	));
 
         if ($order && $order->payment_url) {
             $this->redirect($order->payment_url);
@@ -83,7 +82,7 @@ class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers
     {
         $service = $this->container->get('cryptocurrency_payments_via_coingate.coingate_payment_service');
         $token = $this->createPaymentToken($this->getAmount(), $billing['customernumber']);
-        $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('CoinGatePayment');
+        $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('CoingatePayment');
         $coingate_environment = $this->coingateEnvironment();
         $agent = $this->userAgent();
         $id = $this->callbackAction();
@@ -97,7 +96,7 @@ class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers
 
         $response = $service->createPaymentResponse($order_id, $coingate_environment, $config['CoinGateCredentials'], $billing, $agent);
 
-        if (empty($response->token) || strcmp($response->token, $token) !== 0) {
+        if (empty($response->token) || strcmp($respose->token, $token) !== 0) {
             $this->forward('cancel');
         }
 
@@ -169,7 +168,7 @@ class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers
 
     private function coingateEnvironment()
     {
-        $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('CoinGatePayment');
+        $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('CoingatePayment');
         if ($config['CoinGateEnvironment'] == 'sandbox') {
             $environment = 'sandbox';
         } else {
@@ -202,10 +201,9 @@ class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers
 
     private function getPluginVersion()
     {
-        $plugin = $this->get('kernel')->getPlugins()['CoinGatePayment'];
-        $xml = simplexml_load_file( $plugin->getPath() ."/plugin.xml") or die("Error parsing plugin.xml");
-		    
-        return $xml->version;
+        $xml = simplexml_load_file(__DIR__.'/../../plugin.xml') or die("Error parsing plugin.xml");
+        return = $xml->version;
+         
     }
 
     private function insertOrderID($id)
@@ -227,7 +225,7 @@ class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers
     private function userAgent()
     {
         $coingate_version = $this->getPluginVersion();
-        return $agent = 'Shopware v' . Shopware::VERSION . ' CoinGate Extension v' . $coingate_version[0]["version"];
+        return $agent = 'Shopware v' . Shopware::VERSION . ' CoinGate Extension v' . $coingate_version;
     }
 
 }
