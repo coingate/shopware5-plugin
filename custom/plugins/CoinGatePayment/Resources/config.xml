@@ -10,11 +10,7 @@
             <name>CoinGateEnvironment</name>
             <label lang="en">Environment</label>
             <value>live</value>
-            <description>To test on https://sandbox.coingate.com - CoinGate Sandbox, choose Test Environment. Please
-                note, that for Test Mode you must create a separate account on https://sandbox.coingate.com and generate
-                API credentials there. API credentials generated on https://coingate.com are "Live" credentials and will
-                not work for "Test" mode.
-            </description>
+            <description>To test on https://sandbox.coingate.com - CoinGate Sandbox, choose Test Environment. Please note, that for Test Mode you must create a separate account on https://sandbox.coingate.com and generate API credentials there. API credentials generated on https://coingate.com are "Live" credentials and will not work for "Test" mode.</description>
             <store>
                 <option>
                     <value>sandbox</value>
@@ -30,10 +26,7 @@
             <name>CoinGatePayout</name>
             <label lang="en">Payout Currency</label>
             <value>btc</value>
-            <description>Choose the currency in which your payouts will be made (BTC, EUR, USD, LTC, ETH or do not
-                convert). For real-time EUR or USD settlements, you must verify as a merchant on CoinGate. Do not forget
-                to add your Bitcoin address or bank details for payouts on your CoinGate account.
-            </description>
+            <description>Choose the currency in which your payouts will be made (BTC, EUR, USD, LTC, ETH or do not convert). For real-time EUR or USD settlements, you must verify as a merchant on CoinGate. Do not forget to add your Bitcoin address or bank details for payouts on your CoinGate account.</description>
             <store>
                 <option>
                     <value>btc</value>
