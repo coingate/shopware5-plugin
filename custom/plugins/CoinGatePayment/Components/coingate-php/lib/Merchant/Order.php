@@ -44,7 +44,9 @@ class Order extends Merchant
     public static function create($params, $options = array(), $authentication = array())
     {
         try {
-            return self::createOrFail($params, $options, $authentication);
+            $callback = self::createOrFail($params, $options, $authentication);
+
+            return $callback;
         } catch (OrderIsNotValid $e) {
             return false;
         }

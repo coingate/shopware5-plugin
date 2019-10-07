@@ -70,9 +70,9 @@ class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers
             'user_agent'  => $this->userAgent(),
         ));
 
-
         if ($order && $order->payment_url) {
-            $this->redirect($order->payment_url);
+          $this->insertOrderID($order->id);
+          $this->redirect($order->payment_url);
         } else {
             error_log(print_r(array($order), true)."\n", 3, Shopware()->DocPath() . '/error.log');
         }
@@ -86,14 +86,7 @@ class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers
         $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('CoinGatePayment');
         $coingate_environment = $this->coingateEnvironment();
         $agent = $this->userAgent();
-        $id = $this->callbackAction();
-
-        if (isset($id)) {
-            $order_id = $id;
-        } else {
-            $order = $this->getOrderData();
-            $order_id = $order[0]["coingate_callback_order_id"];
-        }
+        $order_id = $this->getOrderData()[0]['coingate_callback_order_id'];
 
         $response = $service->createPaymentResponse($order_id, $coingate_environment, $config['CoinGateCredentials'], $billing, $agent);
 
@@ -137,18 +130,6 @@ class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers
                 $this->forward('cancel');
                 break;
         }
-    }
-
-    public function callbackAction()
-    {
-        $id = $this->Request()->getParam('id');
-
-        if (isset($id)) {
-            $this->insertOrderID($id);
-        }
-
-        return $id;
-
     }
 
     public function cancelAction()
@@ -204,7 +185,7 @@ class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers
     {
         $plugin = $this->get('kernel')->getPlugins()['CoinGatePayment'];
         $xml = simplexml_load_file( $plugin->getPath() ."/plugin.xml") or die("Error parsing plugin.xml");
-		    
+
         return $xml->version;
     }
 
@@ -227,7 +208,7 @@ class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers
     private function userAgent()
     {
         $coingate_version = $this->getPluginVersion();
-        return $agent = 'Shopware v' . Shopware::VERSION . ' CoinGate Extension v' . $coingate_version[0]["version"];
+        return $agent = 'Shopware v' . Shopware()->Container()->get('config')->get('version') . ' CoinGate Extension v' . $coingate_version[0]["version"];
     }
 
 }
