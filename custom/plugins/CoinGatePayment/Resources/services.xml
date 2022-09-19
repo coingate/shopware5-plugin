@@ -4,7 +4,7 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
         <service id="cryptocurrency_payments_via_coingate.coingate_payment_service"
-                 class="CoinGatePayment\Components\CoinGatePayment\CoinGatePaymentService">
+                 class="CoinGatePayment\Components\CoinGatePayment\CoinGatePaymentService" public="true">
         </service>
     </services>
 </container>
