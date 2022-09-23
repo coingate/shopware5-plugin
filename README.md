@@ -14,19 +14,19 @@ Also note, that *Receive Currency* parameter in your module configuration window
 
 ### via FTP
 
-1. Download <https://github.com/coingate/shopware/releases/download/v1.0.4/coingate-shopware-1.0.4.zip>
+1. Download <https://github.com/coingate/shopware/releases/download/v1.1.0/coingate-shopware-1.1.0.zip>
 
 2. Upload **custom** folder to your website's root directory
 
 3. Go to your Shopware backend panel » **Configuration** » **Plugin Manager** » **Installed**.
 
-3. Click on **Cryptocurrency Payments via CoinGate**.
+4. Click on **Cryptocurrency Payments via CoinGate**.
 
-4. Click on **Install** and **Activate**.
+5. Click on **Install** and **Activate**.
 
-5. Enter your [API credentials](https://support.coingate.com/en/42/how-can-i-create-coingate-api-credentials) (*Auth Token*). Configure **Receive Currency**, select **Environment** and click **Save**.
+6. Enter your [API credentials](https://support.coingate.com/en/42/how-can-i-create-coingate-api-credentials) (*Auth Token*). Configure **Receive Currency**, select **Environment** and click **Save**.
 
-6. In case you are unable to create an order in your Shopware store using our module, copy-paste the code snippet from below to your config.php file to allow the CoinGate plugin to display any exceptions if they occur.
+7. In case you are unable to create an order in your Shopware store using our module, copy-paste the code snippet from below to your config.php file to allow the CoinGate plugin to display any exceptions if they occur.
 
 ```  
    "front" => array(
