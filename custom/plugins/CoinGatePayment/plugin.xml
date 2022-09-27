@@ -2,11 +2,23 @@
 <plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/5.3/engine/Shopware/Components/Plugin/schema/plugin.xsd">
 
-    <label lang="en">Cryptocurrency Payments via CoinGate</label>
-
-    <version>1.0.4</version>
+    <label lang="de">CoinGate Payment</label>
+    <label lang="en">CoinGate Payment</label>
+    
+    <version>1.1.0</version>
     <copyright>(c) CoinGate</copyright>
-    <author>https://coingate.com</author>
+    <license>MIT</license>
+    <link>https://coingate.com</link>
+    <author>CoinGate</author>
+    <compatibility minVersion="5.3.0"/>
 
-    <compatibility minVersion="5.2.13"/>
+    <changelog version="1.1.0">
+        <changes lang="de">Verschiedene Kompatibilitätskorrekturen</changes>
+        <changes lang="en">Various compatibility fixes</changes>
+    </changelog>
+
+    <changelog version="1.0.0">
+        <changes lang="de">Erstveröffentlichung</changes>
+        <changes lang="en">First release</changes>
+    </changelog>
 </plugin>

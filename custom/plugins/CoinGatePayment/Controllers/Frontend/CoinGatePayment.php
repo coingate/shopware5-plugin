@@ -1,214 +1,185 @@
 <?php
 
-use CoinGatePayment\Components\CoinGatePayment\PaymentResponse;
-use CoinGatePayment\Components\CoinGatePayment\CoinGatePaymentService;
 use Shopware\Components\Plugin\ConfigReader;
 use Shopware\Components\CSRFWhitelistAware;
+use Shopware\Models\Order\Status;
+use Shopware\Components\Cart\PaymentTokenService;
 
 require_once __DIR__ . '/../../Components/coingate-php/init.php';
 
 class Shopware_Controllers_Frontend_CoinGatePayment extends Shopware_Controllers_Frontend_Payment implements CSRFWhitelistAware
 {
-    private $pluginDirectory;
-    private $config;
-
     const PAYMENTSTATUSPAID = 12;
-    const PAYMENTSTATUSCANCELED = 17;
-    const PAYMENTSTATUSPENDING = 18;
-    const PAYMENTSTATUSREFUNDED = 20;
-
-    public function preDispatch()
-    {
-        /** @var \Shopware\Components\Plugin $plugin */
-        $plugin = $this->get('kernel')->getPlugins()['CoinGatePayment'];
-
-        $this->get('template')->addTemplateDir($plugin->getPath() . '/Resources/views/');
-    }
-
-    public function indexAction()
-    {
-        switch ($this->getPaymentShortName()) {
-            case 'cryptocurrency_payments_via_coingate':
-                return $this->redirect(['action' => 'direct', 'forceSecure' => true]);
-            default:
-                return $this->redirect(['controller' => 'checkout']);
-        }
-    }
 
     /**
-     * Direct action method.
+     * Index action method.
      *
-     * Collects the payment information and transmits it to the payment provider.
+     * Forwards to the correct action.
      */
-    public function directAction()
+    public function indexAction()
     {
-        $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('CoinGatePayment');
-        $router = $this->Front()->Router();
+        if ($this->getPaymentShortName() != 'cryptocurrency_payments_via_coingate') {
+            $this->redirect(['controller' => 'checkout', 'action' => 'index']);
 
-        $data = $this->getOrderData();
-        $order_id = $data[0]["orderID"];
-        $shop = $this->getShopData();
-
-        $post_params = array(
-            'order_id'          => $order_id,
-            'price_amount'      => $this->getAmount(),
-            'price_currency'    => $this->getCurrencyShortName(),
-            'receive_currency'  => $config['CoinGatePayout'],
-            'title'             => $shop[0]["name"],
-            'description'       => "Order #" . $order_id,
-            'success_url'       => $router->assemble(['action' => 'return']),
-            'cancel_url'        => $router->assemble(['action' => 'cancel']),
-            'callback_url'      => $router->assemble(['action' => 'callback']),
-        );
-
-
-        $coingate_environment = $this->coingateEnvironment();
-
-        $order = \CoinGate\Merchant\Order::create($post_params, array(), array(
-            'environment' => $coingate_environment,
-            'auth_token'  => $config['CoinGateCredentials'],
-            'user_agent'  => $this->userAgent(),
-        ));
-
-        if ($order && $order->payment_url) {
-          $this->insertOrderID($order->id);
-          $this->redirect($order->payment_url);
-        } else {
-            error_log(print_r(array($order), true)."\n", 3, Shopware()->DocPath() . '/error.log');
+            return;
         }
 
+        // --------------------------------------------------------------------------
+
+        $pluginConfig = $this->get('shopware.plugin.cached_config_reader')->getByPluginName('CoinGatePayment');
+        $router = $this->Front()->Router();
+
+        $orderAttr = $this->getLatestOrderAttributes();
+
+        $orderParams = [
+            'order_id'          => $orderAttr['orderID'],
+            'price_amount'      => $this->getAmount(),
+            'price_currency'    => $this->getCurrencyShortName(),
+            'receive_currency'  => $pluginConfig['CoinGatePayout'],
+            'title'             => $this->getShopData()['name'],
+            'description'       => '',
+            'success_url'       => $router->assemble(['action' => 'return']),
+            'callback_url'      => $router->assemble(['action' => 'callback']),
+            'cancel_url'        => $router->assemble(['action' => 'cancel']),
+
+            'token'             => $this->persistBasket()
+        ];
+
+        $order = \CoinGate\Merchant\Order::create($orderParams, [], $this->getCoinGateCredentials($pluginConfig));
+
+        if (! $order) {
+            $this->redirect(sprintf('%s?%s=1', $router->assemble(['controller' => 'checkout', 'action' => 'cart']), 'CouldNotConnectToCoinGate'));
+
+            return;
+        }
+
+        $this->updateOrderAttributes($orderAttr['id'], $order->id);
+
+        $this->redirect($order->payment_url);
+    }
+
+    public function callbackAction()
+    {
+        $service = $this->container->get('cryptocurrency_payments_via_coingate.coingate_payment_service');
+
+        $pluginConfig = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('CoinGatePayment');
+
+        // ----------------------------------------
+
+        $paymentResponse = $service->createPaymentResponse($this->Request());
+
+        // ----------------------------------------
+
+        try {
+            $order = \CoinGate\Merchant\Order::find($paymentResponse->id, [], $this->getCoinGateCredentials($pluginConfig));
+        } catch (Exception $e) {
+            return;
+        }
+
+        $orderAttr = $this->findOrderAttributesByCoinGateOrderId($paymentResponse->id);
+        // validate if order id's match
+        if ($orderAttr['orderID'] != $order->order_id) {
+            return;
+        }
+
+        // ----------------------------------------
+
+        if ($order->status == 'paid') {
+            $this->loadBasketFromSignature($paymentResponse->token);
+            $this->saveOrder(
+                $order->payment_url,
+                $paymentResponse->token,
+                self::PAYMENTSTATUSPAID
+            );
+        }
+
+        $this->Front()->Plugins()->ViewRenderer()->setNoRender();
+        $this->Response()->setHttpResponseCode(200);
     }
 
     public function returnAction()
     {
-        $service = $this->container->get('cryptocurrency_payments_via_coingate.coingate_payment_service');
-        $token = $this->createPaymentToken($this->getAmount(), $billing['customernumber']);
-        $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('CoinGatePayment');
-        $coingate_environment = $this->coingateEnvironment();
-        $agent = $this->userAgent();
-        $order_id = $this->getOrderData()[0]['coingate_callback_order_id'];
+        Shopware()->Modules()->Order()->sDeleteTemporaryOrder();
 
-        $response = $service->createPaymentResponse($order_id, $coingate_environment, $config['CoinGateCredentials'], $billing, $agent);
+        Shopware()->Db()->executeUpdate('DELETE FROM s_order_basket WHERE sessionID=?', [$this->get('session')->offsetGet('sessionId')]);
 
-        if (empty($response->token) || strcmp($response->token, $token) !== 0) {
-            $this->forward('cancel');
-        }
-
-        $cgOrder = $service->coingateCallback($response->id, $coingate_environment, $config['CoinGateCredentials'], $agent);
-
-        switch ($cgOrder->status) {
-            case 'paid':
-                $this->saveOrder(
-                    $cgOrder->payment_url,
-                    $response->token,
-                    self::PAYMENTSTATUSPAID
-                );
-                $this->redirect(['controller' => 'checkout', 'action' => 'finish']);
-                break;
-            case 'pending':
-            case 'confirming':
-                $this->saveOrder(
-                    self::PAYMENTSTATUSPENDING
-                );
-                $this->forward('cancel');
-                break;
-            case 'invalid':
-            case 'expired':
-            case 'canceled':
-                $this->saveOrder(
-                    self::PAYMENTSTATUSCANCELED
-                );
-                $this->forward('cancel');
-                break;
-            case 'refunded':
-                $this->saveOrder(
-                    self::PAYMENTSTATUSREFUNDED
-                );
-                $this->forward('cancel');
-                break;
-            default:
-                $this->forward('cancel');
-                break;
-        }
+        $this->redirect([
+            'module'     => 'frontend',
+            'controller' => 'checkout',
+            'action'     => 'finish'
+        ]);
     }
 
+    /**
+     * Cancel action method
+     */
     public function cancelAction()
     {
+        $this->redirect(['controller' => 'checkout', 'action' => 'confirm']);
     }
 
-    public function createPaymentToken($amount, $customerId)
+    // ------------------------------------------------------
+    // ------------------------------------------------------
+
+    private function getCoinGateCredentials($pluginConfig)
     {
-        return md5(implode('|', [$amount, $customerId]));
-    }
-
-    public function getWhitelistedCSRFActions()
-    {
-        return array(
-            'callback',
-        );
-    }
-
-    private function coingateEnvironment()
-    {
-        $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('CoinGatePayment');
-        if ($config['CoinGateEnvironment'] == 'sandbox') {
-            $environment = 'sandbox';
-        } else {
-            $environment = 'live';
-        }
-
-        return $environment;
-    }
-
-    private function getOrderData()
-    {
-        $queryBuilder = $this->container->get('dbal_connection')->createQueryBuilder();
-        $queryBuilder->select('*')
-            ->from('s_order_attributes');
-        $data = $queryBuilder->execute()->fetchAll();
-        $last_order = array_values(array_slice($data, -1));
-
-        return $last_order;
-    }
-
-    private function getShopData()
-    {
-        $queryBuilder = $this->container->get('dbal_connection')->createQueryBuilder();
-        $queryBuilder->select('*')
-            ->from('s_core_shops');
-        $data = $queryBuilder->execute()->fetchAll();
-
-        return $data;
+        return [
+            'environment' => $pluginConfig['CoinGateEnvironment'] == 'sandbox' ? 'sandbox' : 'live',
+            'auth_token'  => $pluginConfig['CoinGateCredentials'],
+            'user_agent'  => 'Shopware v' . Shopware()->Config()->get('Version') . ' CoinGate Extension v' . $this->getPluginVersion()
+        ];
     }
 
     private function getPluginVersion()
     {
         $plugin = $this->get('kernel')->getPlugins()['CoinGatePayment'];
-        $xml = simplexml_load_file( $plugin->getPath() ."/plugin.xml") or die("Error parsing plugin.xml");
-
-        return $xml->version;
+        $filename = $plugin->getPath() . '/plugin.xml';
+        $xml = simplexml_load_file($filename);
+        return (string)$xml->version;
     }
 
-    private function insertOrderID($id)
+    private function getShopData()
+    {
+        return $this->get('dbal_connection')
+            ->createQueryBuilder()
+            ->select('*')
+            ->from('s_core_shops')
+            ->execute()
+            ->fetchAssociative();
+    }
+
+    private function getLatestOrderAttributes()
+    {
+        return $this->get('dbal_connection')
+            ->createQueryBuilder()
+            ->select('*')
+            ->from('s_order_attributes')
+            ->orderBy('id', 'DESC')
+            ->execute()
+            ->fetchAssociative();
+    }
+
+    private function updateOrderAttributes($id, $cgOrderId)
     {
         /** @var \Shopware\Bundle\AttributeBundle\Service\CrudService $service */
         $service = $this->get('shopware_attribute.crud_service');
         $service->update('s_order_attributes', 'coingate_callback_order_id', 'text');
-        $queryBuilder = $this->container->get('dbal_connection')->createQueryBuilder();
-        $queryBuilder
-            ->insert('s_order_attributes')
-            ->values(
-                array(
-                    'coingate_callback_order_id' => $id,
-                )
-            );
-        $data = $queryBuilder->execute();
+
+        $this->get('dbal_connection')->executeStatement('UPDATE s_order_attributes SET coingate_callback_order_id = ? WHERE id = ?', [$cgOrderId, $id]);
     }
 
-    private function userAgent()
+    private function findOrderAttributesByCoinGateOrderId($cgOrderId)
     {
-        $coingate_version = $this->getPluginVersion();
-        return $agent = 'Shopware v' . Shopware()->Container()->get('config')->get('version') . ' CoinGate Extension v' . $coingate_version[0]["version"];
+        $connection = $this->container->get('dbal_connection');
+        return $connection->fetchAssociative('SELECT * FROM s_order_attributes WHERE coingate_callback_order_id = ?', [$cgOrderId]);
     }
 
+    // ------------------------------------------------------
+    // ------------------------------------------------------
+    // ------------------------------------------------------
+
+    public function getWhitelistedCSRFActions()
+    {
+        return ['callback'];
+    }
 }

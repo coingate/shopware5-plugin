@@ -68,7 +68,8 @@ class CoinGate
 
         if ($method == 'POST') {
             $headers[] = 'Content-Type: application/x-www-form-urlencoded';
-            array_merge($curl_options, array(CURLOPT_POST => 1));
+
+            $curl_options[CURLOPT_POST] = 1;
             curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($params));
         }
 

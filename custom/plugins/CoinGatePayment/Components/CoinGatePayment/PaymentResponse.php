@@ -12,10 +12,10 @@ class PaymentResponse
     /**
      * @var string
      */
-    public $transactionId;
+    public $status;
 
     /**
      * @var string
      */
-    public $status;
+    public $token;
 }
